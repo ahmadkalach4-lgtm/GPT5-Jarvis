@@ -9,25 +9,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Repository auschecken
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Python installieren
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3️⃣ Abhängigkeiten installieren
       - name: Install dependencies
         run: pip install requests
 
-      # 4️⃣ GPT-5 Antwort generieren
       - name: Generate GPT-5 response
         env:
           GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
+          touch response.txt
           python - <<EOF
 import os
 import requests
@@ -35,7 +32,7 @@ import requests
 prompt = "${{ github.event.client_payload.prompt }}"
 api_key = os.getenv("GPT5_API_KEY")
 
-# Beispiel: GPT-5 API URL (ersetze mit echter URL)
+# ERSETZE durch deine echte GPT-5 API URL
 url = "https://api.gpt5.example.com/v1/generate"
 headers = {"Authorization": f"Bearer {api_key}"}
 data = {"prompt": prompt, "max_tokens": 200}
@@ -43,16 +40,14 @@ data = {"prompt": prompt, "max_tokens": 200}
 response = requests.post(url, json=data, headers=headers)
 answer = response.json().get("text", "Keine Antwort erhalten.")
 
-# Antwort in response.txt schreiben
 with open("response.txt", "w") as f:
     f.write(answer)
 EOF
 
-      # 5️⃣ Commit und Push der response.txt
       - name: Commit response
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add response.txt
-          git commit -m "GPT-5 Antwort generiert"
+          git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen"
           git push
