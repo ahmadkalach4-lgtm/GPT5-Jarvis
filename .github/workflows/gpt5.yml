@@ -1,0 +1,13 @@
+name: GPT5 Query
+
+on:
+  repository_dispatch:
+    types: [gpt5_query]
+
+jobs:
+  run_gpt5:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Zeige Prompt
+        run: echo "Prompt: ${{ github.event.client_payload.prompt }}"
+      # Hier kannst du später GPT-5 API-Aufrufe einfügen
