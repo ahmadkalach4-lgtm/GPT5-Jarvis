@@ -35,7 +35,7 @@ import requests
 prompt = "${{ github.event.client_payload.prompt }}"
 api_key = os.getenv("GPT5_API_KEY")
 
-# ⬅️ Hier echte KI-API-URL einfügen
+# ⬅️ HIER DEINE KI-API URL EINSETZEN
 url = "https://api.deine-ki.com/v1/generate"  # z.B. Claude, GPT-5, Gemini
 
 headers = {
@@ -48,16 +48,20 @@ data = {
     "max_tokens": 300
 }
 
-response = requests.post(url, json=data, headers=headers)
-answer = response.json().get("text", "Keine Antwort erhalten.")
+try:
+    response = requests.post(url, json=data, headers=headers, timeout=30)
+    response.raise_for_status()
+    answer = response.json().get("text", "Keine Antwort erhalten.")
+except Exception as e:
+    answer = f"❌ Fehler bei KI-API: {e}"
 
 # Antwort in response.txt schreiben
-with open("response.txt", "w") as f:
+with open("response.txt", "w", encoding="utf-8") as f:
     f.write(answer)
 EOF
 
-      # 5️⃣ Commit & Push response.txt mit GitHub-PAT
-      - name: Commit response
+      # 5️⃣ Commit & Push response.txt
+      - name: Commit & push response
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_PAT }}  # ⬅️ Dein GitHub-PAT
         run: |
@@ -65,5 +69,5 @@ EOF
           git config user.email "actions@github.com"
           git remote set-url origin https://x-access-token:${GITHUB_PAT}@github.com/${{ github.repository }}.git
           git add response.txt
-          git commit -m "GPT-5 Antwort generiert"
+          git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen zum Committen"
           git push
