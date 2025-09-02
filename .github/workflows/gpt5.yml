@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # 4️⃣ GPT-API aufrufen und Antwort schreiben
-      - name: Generate GPT response
+      # 4️⃣ GPT-5 / Claude / Gemini Antwort generieren
+      - name: Generate GPT-5 response
         env:
           GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
@@ -32,27 +32,19 @@ jobs:
 import os
 import requests
 
-# Prompt aus dem Event
 prompt = "${{ github.event.client_payload.prompt }}"
-
-# Dein API-Endpunkt hier einfügen (Claude, GPT-5, Gemini)
 api_key = os.getenv("GPT5_API_KEY")
-url = "https://api.openai.com/v1/chat/completions"  # Beispiel OpenAI GPT
-headers = {
-    "Authorization": f"Bearer {api_key}",
-    "Content-Type": "application/json"
-}
-data = {
-    "model": "gpt-3.5-turbo",
-    "messages": [{"role": "user", "content": prompt}],
-    "max_tokens": 300
-}
+
+# ⚠️ Hier die URL deiner echten KI-API einfügen:
+url = "https://api.gpt5.example.com/v1/generate"  # <-- ersetzen
+headers = {"Authorization": f"Bearer {api_key}"}
+data = {"prompt": prompt, "max_tokens": 200}
 
 response = requests.post(url, json=data, headers=headers)
-answer = response.json().get("choices", [{}])[0].get("message", {}).get("content", "Keine Antwort erhalten.")
+answer = response.json().get("text", "Keine Antwort erhalten.")
 
 # Antwort in response.txt schreiben
-with open("response.txt", "w", encoding="utf-8") as f:
+with open("response.txt", "w") as f:
     f.write(answer)
 EOF
 
@@ -62,5 +54,5 @@ EOF
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add response.txt
-          git commit -m "GPT-Antwort generiert"
+          git commit -m "GPT-5 Antwort generiert"
           git push
