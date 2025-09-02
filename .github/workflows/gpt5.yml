@@ -8,6 +8,24 @@ jobs:
   run_gpt5:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Repository klonen (falls nötig)
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      # 2️⃣ Zeige Prompt in der Action-Log
       - name: Zeige Prompt
         run: echo "Prompt: ${{ github.event.client_payload.prompt }}"
-      # Hier kannst du später GPT-5 API-Aufrufe einfügen
+
+      # 3️⃣ Erstelle response.txt mit Platzhalter-Antwort
+      - name: Erstelle response.txt
+        run: |
+          echo "Antwort auf Prompt: ${{ github.event.client_payload.prompt }}" > response.txt
+
+      # 4️⃣ Commit & Push der response.txt zurück ins Repo
+      - name: Commit response.txt
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add response.txt
+          git commit -m "Update response.txt via GitHub Actions" || echo "Nothing to commit"
+          git push
