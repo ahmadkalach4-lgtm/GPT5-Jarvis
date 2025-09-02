@@ -36,7 +36,9 @@ prompt = "${{ github.event.client_payload.prompt }}"
 api_key = os.getenv("GPT5_API_KEY")
 
 # ⬅️ HIER DEINE KI-API URL EINSETZEN
-url = "https://api.deine-ki.com/v1/generate"  # z.B. Claude, GPT-5, Gemini
+# Beispiel: Claude → "https://api.anthropic.com/v1/complete"
+# Beispiel: GPT-5 → "https://api.gpt5.example.com/v1/generate"
+url = "https://api.openai.com/v1/chat/completions"
 
 headers = {
     "Authorization": f"Bearer {api_key}",
