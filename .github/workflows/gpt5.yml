@@ -9,65 +9,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Repository auschecken
+      # Repository auschecken
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Python installieren
+      # Python installieren
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3️⃣ Abhängigkeiten installieren
+      # Abhängigkeiten installieren
       - name: Install dependencies
-        run: pip install azure-ai-inference
+        run: pip install requests azure-ai-inference
 
-      # 4️⃣ GitHub Models Antwort generieren
+      # GPT-5 / GitHub Models Antwort generieren
       - name: Generate GPT-5 response
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
+          GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
           python - <<EOF
 import os
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
-import base64
+from azure.core.credentials import AzureKeyCredential
 
+prompt = "${{ github.event.client_payload.prompt }}"
+token = os.getenv("GPT5_API_KEY")
+
+# GitHub Models API Endpoint
 endpoint = "https://models.github.ai/inference"
 model = "openai/gpt-5"
-token = os.environ["GITHUB_TOKEN"]
 
 client = ChatCompletionsClient(
     endpoint=endpoint,
-    credential=token,
+    credential=AzureKeyCredential(token),
 )
 
-prompt = "${{ github.event.client_payload.prompt }}"
-
-response = client.complete(
-    messages=[
-        SystemMessage("Du bist ein hilfreicher Assistent."),
-        UserMessage(prompt),
-    ],
-    model=model
-)
-
-answer = response.choices[0].message.content
+try:
+    response = client.complete(
+        messages=[
+            SystemMessage("You are a helpful assistant."),
+            UserMessage(prompt)
+        ],
+        model=model
+    )
+    answer = response.choices[0].message.content
+except Exception as e:
+    answer = f"❌ Fehler bei GitHub Model API: {e}"
 
 # Antwort in response.txt schreiben
 with open("response.txt", "w", encoding="utf-8") as f:
     f.write(answer)
 EOF
 
-      # 5️⃣ Commit & Push response.txt
-      - name: Commit & Push response
+      # Commit & Push response.txt
+      - name: Commit & push response
         env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_PAT}@github.com/${{ github.repository }}.git
+          git remote set-url origin https://x-access-token:${GPT5_API_KEY}@github.com/${{ github.repository }}.git
           git add response.txt
-          git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen"
+          git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen zum Committen"
           git push
