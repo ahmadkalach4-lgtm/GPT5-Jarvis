@@ -26,7 +26,7 @@ jobs:
       # 4️⃣ GitHub Models Antwort generieren
       - name: Generate GPT-5 response
         env:
-          GITHUB_TOKEN: ${{ secrets.GPT5_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
         run: |
           python - <<EOF
 import os
