@@ -9,45 +9,58 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Repository auschecken
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Python installieren
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # 3️⃣ Abhängigkeiten installieren
       - name: Install dependencies
         run: pip install requests
 
-      - name: Generate GPT-5 response
+      # 4️⃣ GPT-API aufrufen und Antwort schreiben
+      - name: Generate GPT response
         env:
           GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
-          touch response.txt
           python - <<EOF
 import os
 import requests
 
+# Prompt aus dem Event
 prompt = "${{ github.event.client_payload.prompt }}"
-api_key = os.getenv("GPT5_API_KEY")
 
-# ERSETZE durch deine echte GPT-5 API URL
-url = "https://api.gpt5.example.com/v1/generate"
-headers = {"Authorization": f"Bearer {api_key}"}
-data = {"prompt": prompt, "max_tokens": 200}
+# Dein API-Endpunkt hier einfügen (Claude, GPT-5, Gemini)
+api_key = os.getenv("GPT5_API_KEY")
+url = "https://api.openai.com/v1/chat/completions"  # Beispiel OpenAI GPT
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+data = {
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": prompt}],
+    "max_tokens": 300
+}
 
 response = requests.post(url, json=data, headers=headers)
-answer = response.json().get("text", "Keine Antwort erhalten.")
+answer = response.json().get("choices", [{}])[0].get("message", {}).get("content", "Keine Antwort erhalten.")
 
-with open("response.txt", "w") as f:
+# Antwort in response.txt schreiben
+with open("response.txt", "w", encoding="utf-8") as f:
     f.write(answer)
 EOF
 
+      # 5️⃣ Commit und Push der response.txt
       - name: Commit response
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add response.txt
-          git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen"
+          git commit -m "GPT-Antwort generiert"
           git push
