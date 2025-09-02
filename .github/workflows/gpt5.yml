@@ -35,10 +35,10 @@ import requests
 prompt = "${{ github.event.client_payload.prompt }}"
 api_key = os.getenv("GPT5_API_KEY")
 
-# ⚠️ Hier die URL deiner echten KI-API einfügen:
-url = "https://api.gpt5.example.com/v1/generate"  # <-- ersetzen
+# ⚠️ Hier deine echte KI-API einfügen
+url = "https://api.gpt5.example.com/v1/generate"  # ersetzen
 headers = {"Authorization": f"Bearer {api_key}"}
-data = {"prompt": prompt, "max_tokens": 200}
+data = {"prompt": prompt, "max_tokens": 300}
 
 response = requests.post(url, json=data, headers=headers)
 answer = response.json().get("text", "Keine Antwort erhalten.")
@@ -48,7 +48,7 @@ with open("response.txt", "w") as f:
     f.write(answer)
 EOF
 
-      # 5️⃣ Commit und Push der response.txt
+      # 5️⃣ Commit & Push response.txt
       - name: Commit response
         run: |
           git config user.name "GitHub Actions"
