@@ -23,48 +23,56 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # 4️⃣ GPT-5 / Claude / Gemini Antwort generieren
-      - name: Generate GPT-5 response
+      # 4️⃣ GitHub API-Aufruf & Antwort in response.txt schreiben
+      - name: Generate response via GitHub API
         env:
-          GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}  # <-- GitHub PAT für Aktionen
         run: |
           python - <<EOF
 import os
 import requests
+import base64
 
+# 1️⃣ Prompt aus workflow event
 prompt = "${{ github.event.client_payload.prompt }}"
-api_key = os.getenv("GPT5_API_KEY")
 
-# ⬅️ HIER ECHTE KI-API-URL EINSETZEN
-url = "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"  
+# 2️⃣ GitHub Repo & Token
+OWNER = "${{ github.repository_owner }}"
+REPO = "${{ github.repository }}"
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-# ⬅️ HIER HEADERS ANPASSEN, Z.B. für Claude / Gemini / GPT-5
-headers = {
-    "Authorization": f"Bearer {api_key}",
-    "Content-Type": "application/json"
+# 3️⃣ URL für response.txt
+url = f"https://api.github.com/repos/{OWNER}/{REPO}/contents/response.txt"
+
+headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+
+# 4️⃣ Prüfen ob response.txt schon existiert
+r = requests.get(url, headers=headers)
+sha = r.json()["sha"] if r.status_code == 200 else None
+
+# 5️⃣ Hier KI-Logik einfügen oder Platzhalter verwenden
+# ⬅️ HIER ECHTE KI-API EINSETZEN
+answer = f"Prompt: {prompt}\nAntwort: (Platzhalter – hier KI einfügen)"
+
+# 6️⃣ payload für GitHub API
+payload = {
+    "message": "Antwort generiert",
+    "content": base64.b64encode(answer.encode("utf-8")).decode("utf-8"),
 }
+if sha:
+    payload["sha"] = sha
 
-# ⬅️ HIER DATEN ANPASSEN, je nach API-Spezifikation
-data = {
-    "prompt": prompt,
-    "max_tokens": 300
-}
-
-response = requests.post(url, json=data, headers=headers)
-
-# ⬅️ HIER ANPASSEN, wie die Antwort aus der API extrahiert wird
-answer = response.json().get("text", "Keine Antwort erhalten.")
-
-# Antwort in response.txt schreiben
-with open("response.txt", "w") as f:
-    f.write(answer)
+# 7️⃣ Datei erstellen oder aktualisieren
+resp = requests.put(url, json=payload, headers=headers)
+if resp.status_code not in [200, 201]:
+    raise Exception(f"Fehler beim Schreiben von response.txt: {resp.text}")
 EOF
 
-      # 5️⃣ Commit & Push response.txt
+      # 5️⃣ Commit & Push response.txt (falls nicht automatisch)
       - name: Commit response
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add response.txt
-          git commit -m "GPT-5 Antwort generiert"
+          git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen zum committen"
           git push
