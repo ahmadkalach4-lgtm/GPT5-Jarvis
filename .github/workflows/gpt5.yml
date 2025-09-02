@@ -35,12 +35,24 @@ import requests
 prompt = "${{ github.event.client_payload.prompt }}"
 api_key = os.getenv("GPT5_API_KEY")
 
-# ⚠️ Hier deine echte KI-API einfügen
-url = "https://api.gpt5.example.com/v1/generate"  # ersetzen
-headers = {"Authorization": f"Bearer {api_key}"}
-data = {"prompt": prompt, "max_tokens": 300}
+# ⬅️ HIER ECHTE KI-API-URL EINSETZEN
+url = "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"  
+
+# ⬅️ HIER HEADERS ANPASSEN, Z.B. für Claude / Gemini / GPT-5
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+# ⬅️ HIER DATEN ANPASSEN, je nach API-Spezifikation
+data = {
+    "prompt": prompt,
+    "max_tokens": 300
+}
 
 response = requests.post(url, json=data, headers=headers)
+
+# ⬅️ HIER ANPASSEN, wie die Antwort aus der API extrahiert wird
 answer = response.json().get("text", "Keine Antwort erhalten.")
 
 # Antwort in response.txt schreiben
