@@ -9,24 +9,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Repository auschecken
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Python installieren
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # Abhängigkeiten installieren
       - name: Install dependencies
         run: pip install requests azure-ai-inference
 
-      # GPT-5 / GitHub Models Antwort generieren
       - name: Generate GPT-5 response
         env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
           python - <<EOF
 import os
@@ -35,7 +31,7 @@ from azure.ai.inference.models import SystemMessage, UserMessage
 from azure.core.credentials import AzureKeyCredential
 
 prompt = "${{ github.event.client_payload.prompt }}"
-token = os.getenv("GITHUB_PAT")
+token = os.getenv("GPT5_API_KEY")
 
 endpoint = "https://models.github.ai/inference"
 model = "openai/gpt-5"
@@ -61,14 +57,13 @@ with open("response.txt", "w", encoding="utf-8") as f:
     f.write(answer)
 EOF
 
-      # Commit & Push response.txt
       - name: Commit & push response
         env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          GPT5_API_KEY: ${{ secrets.GPT5_API_KEY }}
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_PAT}@github.com/${{ github.repository }}.git
+          git remote set-url origin https://x-access-token:${GPT5_API_KEY}@github.com/${{ github.repository }}.git
           git add response.txt
           git commit -m "GPT-5 Antwort generiert" || echo "Keine Änderungen zum Committen"
           git push
